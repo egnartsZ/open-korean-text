@@ -25,6 +25,7 @@ import java.util.zip.GZIPInputStream
 import org.openkoreantext.processor.util.KoreanConjugation._
 import org.openkoreantext.processor.util.KoreanPos._
 
+import java.sql.DriverManager
 import scala.collection.JavaConverters._
 import scala.io.Source
 
@@ -86,6 +87,20 @@ object KoreanDictionaryProvider {
     set
   }
 
+  protected[processor] def selectNouns(nounSet: CharArraySet) = {
+    val conn = DriverManager.getConnection("jdbc:mysql://172.31.45.104/zelos", "zelos", "zelos1!")
+    try {
+      val stmt = conn.createStatement()
+      val resultSet = stmt.executeQuery("SELECT noun FROM zelos.nlp_nouns")
+      while (resultSet.next()) {
+        nounSet.add(resultSet.getString("noun"))
+      }
+    } finally {
+      conn.close()
+    }
+
+  }
+
   protected[processor] def readFileByLineFromResources(filename: String): Iterator[String] = {
     readStreamByLine(
       if (filename.endsWith(".gz")) {
@@ -116,7 +131,7 @@ object KoreanDictionaryProvider {
     val map: util.HashMap[KoreanPos, CharArraySet] =
       new java.util.HashMap[KoreanPos, CharArraySet]
 
-    map.put(Noun, readWords(
+    val nounSet = readWords(
       "noun/nouns.txt", "noun/entities.txt", "noun/spam.txt",
       "noun/names.txt", "noun/twitter.txt", "noun/lol.txt",
       "noun/slangs.txt", "noun/company_names.txt",
@@ -124,7 +139,11 @@ object KoreanDictionaryProvider {
       "substantives/given_names.txt", "noun/kpop.txt", "noun/bible.txt",
       "noun/pokemon.txt", "noun/congress.txt", "noun/wikipedia_title_nouns.txt",
       "noun/brand.txt", "noun/fashion.txt", "noun/neologism.txt"
-    ))
+    )
+
+    selectNouns(nounSet)
+    map.put(Noun, nounSet)
+
     map.put(Verb, conjugatePredicatesToCharArraySet(readWordsAsSet("verb/verb.txt")))
     map.put(Adjective, conjugatePredicatesToCharArraySet(readWordsAsSet("adjective/adjective.txt"), isAdjective = true))
     map.put(Adverb, readWords("adverb/adverb.txt"))
