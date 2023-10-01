@@ -120,6 +120,18 @@ class KoreanTokenizerTest extends TestBase {
     )
   }
 
+  test("zelos") {
+    assert(
+      tokenize("2차전지") ===
+        List(KoreanToken("2차전지", Noun, 0, 4))
+    )
+
+    assert(
+      tokenize("AJ네트웍스") ===
+        List(KoreanToken("AJ네트웍스", Noun, 0, 6))
+    )
+  }
+
   test("tokenize should return expected tokens") {
     assert(
       tokenize("개루루야") ===

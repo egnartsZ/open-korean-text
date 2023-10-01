@@ -87,14 +87,17 @@ object KoreanDictionaryProvider {
     set
   }
 
-  protected[processor] def selectNouns(nounSet: CharArraySet) = {
+  protected[processor] def getNounsFromZelosDB() = {
     val conn = DriverManager.getConnection("jdbc:mysql://172.31.45.104/zelos", "zelos", "zelos1!")
     try {
+      val nouns = new CharArraySet(10000)
       val stmt = conn.createStatement()
       val resultSet = stmt.executeQuery("SELECT noun FROM zelos.nlp_nouns")
       while (resultSet.next()) {
-        nounSet.add(resultSet.getString("noun"))
+        nouns.add(resultSet.getString("noun"))
       }
+
+      nouns
     } finally {
       conn.close()
     }
@@ -115,6 +118,8 @@ object KoreanDictionaryProvider {
   protected[processor] def newCharArraySet: CharArraySet = {
     new CharArraySet(10000)
   }
+
+  val zelosNouns: CharArraySet = getNounsFromZelosDB()
 
   lazy val koreanEntityFreq: util.HashMap[CharSequence, Float] =
     readWordFreqs("freq/entity-freq.txt.gz")
@@ -141,7 +146,7 @@ object KoreanDictionaryProvider {
       "noun/brand.txt", "noun/fashion.txt", "noun/neologism.txt"
     )
 
-    selectNouns(nounSet)
+    nounSet.addAll(zelosNouns)
     map.put(Noun, nounSet)
 
     map.put(Verb, conjugatePredicatesToCharArraySet(readWordsAsSet("verb/verb.txt")))

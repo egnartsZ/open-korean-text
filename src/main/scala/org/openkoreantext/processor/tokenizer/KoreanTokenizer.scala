@@ -18,8 +18,9 @@
 
 package org.openkoreantext.processor.tokenizer
 
-import java.util
+import org.openkoreantext.processor.merger.MultiplePosToNoun
 
+import java.util
 import org.openkoreantext.processor.stemmer.KoreanStemmer
 import org.openkoreantext.processor.tokenizer.KoreanChunker._
 import org.openkoreantext.processor.util.KoreanDictionaryProvider._
@@ -96,7 +97,7 @@ object KoreanTokenizer {
                profile: TokenizerProfile = TokenizerProfile.defaultProfile
               ): Seq[KoreanToken] = {
     val tokenized = tokenizeTopN(text, 1, profile).flatMap(_.head)
-    KoreanStemmer.stem(tokenized)
+    MultiplePosToNoun.merge(KoreanStemmer.stem(tokenized))
   }
 
   /**
